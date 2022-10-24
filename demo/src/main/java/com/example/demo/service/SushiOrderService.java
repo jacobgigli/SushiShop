@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -94,6 +95,48 @@ public class SushiOrderService {
             }
 
             if (pausedOrder.getStatusId() == 4 || pausedOrder.getStatusId() == 5) {
+
+                return 2;
+
+
+            }
+
+        }
+        return 0;
+    }
+
+    public int resumeSushiOrders(int orderId) {
+        if (repo.existsById(orderId)) {
+            SushiOrder resumedOrder = repo.findById(orderId).get(0);
+
+            if (resumedOrder.getStatusId() == 3) {
+
+                if (orderQueue.peek() == null){
+                    resumedOrder.setStatusId(1);
+                    orderQueue.add(resumedOrder);
+                    repo.save(resumedOrder);
+                    return 1;
+
+                }
+
+                else {
+
+                    Date d1 = orderQueue.peek().getCreatedAt();
+                    Instant i1 = d1.toInstant();
+                    System.out.println(i1);
+                    i1 = i1.minusMillis(1);
+                    resumedOrder.setCreatedAt(Date.from(i1));
+                    resumedOrder.setStatusId(1);
+                    orderQueue.add(resumedOrder);
+                    repo.save(resumedOrder);
+                    return 1;
+
+                }
+
+
+            }
+
+            else {
 
                 return 2;
 

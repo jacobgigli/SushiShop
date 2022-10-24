@@ -53,18 +53,42 @@ public class ResponseHandler {
 
     }
 
-    public static ResponseEntity<Object> generatePauseResponse(int deleteResponseCode) {
+    public static ResponseEntity<Object> generatePauseResponse(int pausedResponseCode) {
         Map<String, Object> map = new HashMap<String, Object>();
-        if (deleteResponseCode == 1){
+        if (pausedResponseCode == 1){
             map.put("code", 0);
             map.put("msg", "order paused");
             return new ResponseEntity<Object>(map, HttpStatus.OK);
 
         }
 
-        else if (deleteResponseCode == 2){
+        else if (pausedResponseCode == 2){
             map.put("code", 2);
             map.put("msg", "Can't pause completed or cancelled order");
+
+            return new ResponseEntity<Object>(map, HttpStatus.BAD_REQUEST);
+        }
+        else{
+            map.put("code", 1);
+            map.put("msg", "order not found");
+
+            return new ResponseEntity<Object>(map, HttpStatus.NOT_FOUND);
+        }
+
+
+    }
+    public static ResponseEntity<Object> generateResumeResponse(int resumedResponseCode) {
+        Map<String, Object> map = new HashMap<String, Object>();
+        if (resumedResponseCode == 1){
+            map.put("code", 0);
+            map.put("msg", "order resumed");
+            return new ResponseEntity<Object>(map, HttpStatus.OK);
+
+        }
+
+        else if (resumedResponseCode == 2){
+            map.put("code", 2);
+            map.put("msg", "Can't resume completed or cancelled order");
 
             return new ResponseEntity<Object>(map, HttpStatus.BAD_REQUEST);
         }

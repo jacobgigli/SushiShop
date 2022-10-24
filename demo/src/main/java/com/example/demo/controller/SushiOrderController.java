@@ -55,6 +55,14 @@ public class SushiOrderController {
 
     }
 
+    @PutMapping(value = "/api/orders/{order_id}/resume")
+    @ResponseBody
+    public ResponseEntity resumeSushiOrders(@PathVariable(value = "order_id", required = true) int orderId){
+        int resumeResponseCode = sushiOrderService.resumeSushiOrders(orderId);
+        return ResponseHandler.generateResumeResponse(resumeResponseCode);
+
+    }
+
 }
 
 
