@@ -1,21 +1,15 @@
 package com.example.demo.model;
 
+import com.example.demo.exception.SushiOrderRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.bind.Name;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.PersistenceConstructor;
-import org.springframework.data.annotation.PersistenceCreator;
-import org.springframework.data.annotation.Transient;
-import org.springframework.data.relational.core.mapping.Column;
+
 
 import java.util.Date;
 import java.util.Objects;
 
 
 public class SushiOrder {
-
-    public static int numberOfSushi = 1;
     @Override
     public String toString() {
         return "SushiOrder{" +
@@ -61,53 +55,55 @@ public class SushiOrder {
     }
 
     public SushiOrder(@JsonProperty("sushi_name") String name) {
-        if (name!= null && name.equals("California Roll")) {
+        if (name == null) {
+            throw new SushiOrderRequestException("Name cannot be null");
+
+        } else if (name.equals("California Roll")) {
             this.sushiId = 1;
             this.statusId = 1;
             this.time = 30;
             this.name = "California Roll";
-        }
-
-        if (name!= null &&  name.equals("Kamikaze Roll")) {
+        } else if (name.equals("Kamikaze Roll")) {
             this.sushiId = 2;
             this.statusId = 1;
             this.time = 40;
             this.name = "Kamikaze Roll";
-        }
-
-        if (name!= null && name.equals("Dragon Eye")) {
+        } else if (name.equals("Dragon Eye")) {
             this.sushiId = 3;
             this.statusId = 1;
             this.time = 50;
             this.name = "Dragon Eye";
+        } else {
+            throw new SushiOrderRequestException("Name does not correspond to current sushi options");
         }
+
         this.createdAt = new Date();
-        this.name = "test";
         this.timeSpent = 0;
     }
 
 
     private String name;
 
-   public String getName() {
-       return name;
+    public String getName() {
+        return name;
     }
 
     public void setName(String name) {
-        this.name = name;  }
+        this.name = name;
+    }
 
     @Id
 
     private int id;
-   private int time;
-   private int timeSpent;
+    private int time;
+    private int timeSpent;
 
 
     private int statusId;
 
     private Date createdAt;
 
-    public Date getCreatedAt(){
+    public Date getCreatedAt() {
         return createdAt;
     }
 

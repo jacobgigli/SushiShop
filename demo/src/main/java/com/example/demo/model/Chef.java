@@ -19,7 +19,7 @@ public class Chef {
         clear();
     }
 
-    public void clear(){
+    public void clear() {
 
         this.timeSpent = 0;
         this.orderId = 0;
@@ -28,18 +28,18 @@ public class Chef {
 
     }
 
-    public void assignOrder(int orderId, int orderTime, int timeSpent){
+    public void assignOrder(int orderId, int orderTime, int timeSpent) {
         this.orderId = orderId;
         this.orderTime = orderTime;
         this.timeSpent = timeSpent;
         this.busy = true;
     }
 
-    public void increment(){
+    public void increment() {
         this.timeSpent += 1;
     }
 
-    public boolean finishedOrder(){
+    public boolean finishedOrder() {
         return this.timeSpent == this.orderTime;
     }
 

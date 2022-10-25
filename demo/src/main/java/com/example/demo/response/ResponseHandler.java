@@ -10,12 +10,15 @@ import java.util.List;
 import java.util.Map;
 
 public class ResponseHandler {
-    public static ResponseEntity<Object> generatePostResponse(String message, HttpStatus status, Object responseObj) {
+    public static ResponseEntity<Object> generatePostResponse(HttpStatus status, Object responseObj) {
         Map<String, Object> map = new HashMap<String, Object>();
+
         map.put("order", responseObj);
-        map.put("msg", message);
+        map.put("msg", "Order Created");
         map.put("code", 0);
         return new ResponseEntity<Object>(map, status);
+
+
     }
 
     public static ResponseEntity<Object> generateGetResponse(HttpStatus status, List<List<SushiOrder>> responseObj) {
@@ -30,20 +33,17 @@ public class ResponseHandler {
 
     public static ResponseEntity<Object> generateDeleteResponse(int deleteResponseCode) {
         Map<String, Object> map = new HashMap<String, Object>();
-        if (deleteResponseCode == 1){
+        if (deleteResponseCode == 1) {
             map.put("code", 0);
             map.put("msg", "order cancelled");
             return new ResponseEntity<Object>(map, HttpStatus.OK);
 
-        }
-
-        else if (deleteResponseCode == 2){
+        } else if (deleteResponseCode == 2) {
             map.put("code", 2);
             map.put("msg", "Can't cancel completed or cancelled order");
 
             return new ResponseEntity<Object>(map, HttpStatus.BAD_REQUEST);
-        }
-        else{
+        } else {
             map.put("code", 1);
             map.put("msg", "order not found");
 
@@ -55,20 +55,17 @@ public class ResponseHandler {
 
     public static ResponseEntity<Object> generatePauseResponse(int pausedResponseCode) {
         Map<String, Object> map = new HashMap<String, Object>();
-        if (pausedResponseCode == 1){
+        if (pausedResponseCode == 1) {
             map.put("code", 0);
             map.put("msg", "order paused");
             return new ResponseEntity<Object>(map, HttpStatus.OK);
 
-        }
-
-        else if (pausedResponseCode == 2){
+        } else if (pausedResponseCode == 2) {
             map.put("code", 2);
-            map.put("msg", "Can't pause completed or cancelled order");
+            map.put("msg", "Can't pause completed, cancelled or paused order");
 
             return new ResponseEntity<Object>(map, HttpStatus.BAD_REQUEST);
-        }
-        else{
+        } else {
             map.put("code", 1);
             map.put("msg", "order not found");
 
@@ -77,22 +74,20 @@ public class ResponseHandler {
 
 
     }
+
     public static ResponseEntity<Object> generateResumeResponse(int resumedResponseCode) {
         Map<String, Object> map = new HashMap<String, Object>();
-        if (resumedResponseCode == 1){
+        if (resumedResponseCode == 1) {
             map.put("code", 0);
             map.put("msg", "order resumed");
             return new ResponseEntity<Object>(map, HttpStatus.OK);
 
-        }
-
-        else if (resumedResponseCode == 2){
+        } else if (resumedResponseCode == 2) {
             map.put("code", 2);
-            map.put("msg", "Can't resume completed or cancelled order");
+            map.put("msg", "Can't resume completed, cancelled, deleted, or in progress order");
 
             return new ResponseEntity<Object>(map, HttpStatus.BAD_REQUEST);
-        }
-        else{
+        } else {
             map.put("code", 1);
             map.put("msg", "order not found");
 

@@ -5,7 +5,6 @@ import com.example.demo.model.Chef;
 import com.example.demo.model.SushiOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +16,25 @@ import java.util.*;
 
 public class SushiOrderService {
 
+    private final int CREATED = 1;
+    private final int INPROGRESS = 2;
+    private final int PAUSED = 3;
+    private final int FINISHED = 4;
+    private final int CANCELLED = 5;
+
+    private final int RESPONSENOTFOUND = 0;
+
+    private final int RESPONSESUCCESS = 1;
+
+    private final int RESPONSEDENIED = 2;
+
+    private final int NUMOFCHEFS = 3;
+
     List<Chef> chefs;
-    int numberOfSecondsOpen;
+
+    // The time the sushi restaurant is open, the time is in seconds that the simulation is ran for
+    int numberOfSecondsOpen = 1800;
+    // sushi orders, order in most recent at the head of the queue
     PriorityQueue<SushiOrder> orderQueue;
 
     public void sushiShop(int numChefs) {
@@ -28,6 +44,7 @@ public class SushiOrderService {
         }
         this.orderQueue = new PriorityQueue<SushiOrder>(new Comparator<SushiOrder>() {
             @Override
+            // sorting the priority queue based on timestamp, earliest timestamp is at the head of the queue
             public int compare(SushiOrder o1, SushiOrder o2) {
                 Date d1 = o1.getCreatedAt();
                 Date d2 = o2.getCreatedAt();
@@ -36,7 +53,6 @@ public class SushiOrderService {
 
 
         });
-        this.numberOfSecondsOpen = 1800;
 
     }
 
@@ -46,121 +62,111 @@ public class SushiOrderService {
     public void addSushiOrder(SushiOrder sushiOrder) {
 
         repo.save(sushiOrder);
-        this.orderQueue.add(repo.findById(sushiOrder.getId()).get(0));
+        this.orderQueue.add(repo.findById(sushiOrder.getId()));
 
     }
 
     public List<List<SushiOrder>> displaySushiOrders() {
-        List<List<SushiOrder>> r1 = new ArrayList<>();
-        r1.add(repo.findByStatusId(2));
-        r1.add(repo.findByStatusId(1));
-        r1.add(repo.findByStatusId(3));
-        r1.add(repo.findByStatusId(5));
-        r1.add(repo.findByStatusId(4));
-        return r1;
+        // print out sushi orders based on status id
+        List<List<SushiOrder>> sushiOrderDisplay = new ArrayList<>();
+        sushiOrderDisplay.add(repo.findByStatusId(INPROGRESS));
+        sushiOrderDisplay.add(repo.findByStatusId(CREATED));
+        sushiOrderDisplay.add(repo.findByStatusId(PAUSED));
+        sushiOrderDisplay.add(repo.findByStatusId(CANCELLED));
+        sushiOrderDisplay.add(repo.findByStatusId(FINISHED));
+        return sushiOrderDisplay;
 
     }
 
     public int deleteSushiOrders(int orderId) {
         if (repo.existsById(orderId)) {
-            SushiOrder cancelledOrder = repo.findById(orderId).get(0);
-            if (cancelledOrder.getStatusId() != 4 && cancelledOrder.getStatusId() != 5) {
-                cancelledOrder.setStatusId(5);
+            SushiOrder cancelledOrder = repo.findById(orderId);
+            if (cancelledOrder.getStatusId() != FINISHED && cancelledOrder.getStatusId() != CANCELLED) {
+                cancelledOrder.setStatusId(CANCELLED);
                 repo.save(cancelledOrder);
-                return 1;
+                return RESPONSESUCCESS;
 
             }
 
-            if (cancelledOrder.getStatusId() == 4 || cancelledOrder.getStatusId() == 5) {
+            if (cancelledOrder.getStatusId() == FINISHED || cancelledOrder.getStatusId() == CANCELLED) {
 
-                return 2;
+                return RESPONSEDENIED;
 
 
             }
 
         }
-        return 0;
+        return RESPONSENOTFOUND;
     }
 
 
     public int pauseSushiOrders(int orderId) {
         if (repo.existsById(orderId)) {
-            SushiOrder pausedOrder = repo.findById(orderId).get(0);
+            SushiOrder pausedOrder = repo.findById(orderId);
 
-            if (pausedOrder.getStatusId() != 4 && pausedOrder.getStatusId() != 5) {
-                pausedOrder.setStatusId(3);
+            if (pausedOrder.getStatusId() != FINISHED && pausedOrder.getStatusId() != CANCELLED && pausedOrder.getStatusId() != PAUSED) {
+                pausedOrder.setStatusId(PAUSED);
                 repo.save(pausedOrder);
-                return 1;
+                return RESPONSESUCCESS;
 
             }
 
-            if (pausedOrder.getStatusId() == 4 || pausedOrder.getStatusId() == 5) {
+            if (pausedOrder.getStatusId() == FINISHED || pausedOrder.getStatusId() == CANCELLED || pausedOrder.getStatusId() == PAUSED) {
 
-                return 2;
+                return RESPONSEDENIED;
 
 
             }
 
         }
-        return 0;
+        return RESPONSENOTFOUND;
     }
 
     public int resumeSushiOrders(int orderId) {
         if (repo.existsById(orderId)) {
-            SushiOrder resumedOrder = repo.findById(orderId).get(0);
+            SushiOrder resumedOrder = repo.findById(orderId);
 
-            if (resumedOrder.getStatusId() == 3) {
-
-                if (orderQueue.peek() == null){
-                    resumedOrder.setStatusId(1);
-                    orderQueue.add(resumedOrder);
-                    repo.save(resumedOrder);
-                    return 1;
-
-                }
-
-                else {
-
+            if (resumedOrder.getStatusId() == PAUSED) {
+                // edge case if there is only one order and it is paused, don't do this as orderQueue would be empty and ensured it will get to head of the queue
+                if (orderQueue.peek() != null) {
+                    // timestamp that ensures it processed as soon as possible, by placing it at the head of the priority queue
                     Date d1 = orderQueue.peek().getCreatedAt();
                     Instant i1 = d1.toInstant();
-                    System.out.println(i1);
                     i1 = i1.minusMillis(1);
                     resumedOrder.setCreatedAt(Date.from(i1));
-                    resumedOrder.setStatusId(1);
-                    orderQueue.add(resumedOrder);
-                    repo.save(resumedOrder);
-                    return 1;
 
                 }
+                resumedOrder.setStatusId(CREATED);
+                orderQueue.add(resumedOrder);
+                repo.save(resumedOrder);
+                return RESPONSESUCCESS;
 
 
-            }
+            } else {
 
-            else {
-
-                return 2;
+                return RESPONSEDENIED;
 
 
             }
 
         }
-        return 0;
+        return RESPONSENOTFOUND;
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void sushiRestaurant() throws InterruptedException {
 
-        sushiShop(3);
-        System.out.println("Welcome to the sushi restruant");
+        sushiShop(NUMOFCHEFS);
+        // time remaining for simulation
         while (numberOfSecondsOpen > 0) {
-            for (Chef c : this.chefs) {
-                if (c.isBusy()) {
+            for (Chef chef : this.chefs) {
+                if (chef.isBusy()) {
                     continue;
                 }
                 SushiOrder currentOrder = orderQueue.poll();
-
+                // go through orders until there is a valid order to process
                 while (currentOrder != null) {
-                    if (repo.findById(currentOrder.getId()).get(0).getStatusId() == 1) {// check in database to see if it is a new order
+                    if (repo.findById(currentOrder.getId()).getStatusId() == CREATED) {// check in database to see if it is a new order
                         break;
                     }
                     currentOrder = orderQueue.poll();
@@ -169,34 +175,33 @@ public class SushiOrderService {
 
 
                 if (currentOrder != null) {
-                    currentOrder.setStatusId(2);
+                    currentOrder.setStatusId(INPROGRESS);
                     repo.save(currentOrder);
-                    c.assignOrder(currentOrder.getId(), currentOrder.getTime(), currentOrder.getTimeSpent());
+                    chef.assignOrder(currentOrder.getId(), currentOrder.getTime(), currentOrder.getTimeSpent());
                 }
             }
+            // simulate 1 second of work
             Thread.sleep(1000);
             numberOfSecondsOpen -= 1;
-            for (Chef c : this.chefs) {
-                if (!c.isBusy()) {
-                    continue; // chef is idel so don't progress
+            for (Chef chef : this.chefs) {
+                if (!chef.isBusy()) {
+                    continue; // chef is idle so don't process
                 }
-                System.out.println("processing busy chefs");
-                c.increment();
-                SushiOrder chefOrder = repo.findById(c.getOrderId()).get(0);
-                System.out.println(c.getTimeSpent());
-                System.out.println(c.getOrderTime());
-                if (c.finishedOrder() || chefOrder.getStatusId() != 2) {
-                    System.out.println("order status changed from in progress");
-                    if (c.finishedOrder()) {
-                        System.out.println("Finished Order");
-                        chefOrder.setStatusId(4);
+
+                // add a second of work to order timespent
+                chef.increment();
+                SushiOrder chefOrder = repo.findById(chef.getOrderId());
+                if (chef.finishedOrder() || chefOrder.getStatusId() != INPROGRESS) {
+                    if (chef.finishedOrder()) {
+                        chefOrder.setStatusId(FINISHED);
                     }
-                    chefOrder.setTimeSpent(c.getTimeSpent());
+                    chefOrder.setTimeSpent(chef.getTimeSpent());
                     repo.save(chefOrder);
-                    c.clear();
+                    // chef is ready for a new order
+                    chef.clear();
 
                 } else {
-                    chefOrder.setTimeSpent(c.getTimeSpent());
+                    chefOrder.setTimeSpent(chef.getTimeSpent());
                     repo.save(chefOrder);
                 }
             }
